@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta name="format-detection" content="telephone=no, email=no, address=no">
+  <title>firestore sample</title>
+</head>
+<body>
+
+<h1>Message is: <span id="output"></span>
+  <button id="loadBtn">表示</button>
+</h1>
+<input id="messageFld" type="text">
+<button id="saveBtn">保存</button>
+<button id="updateBtn">更新</button>
+<button id="deleteBtn">削除</button>
+
+<script src="https://www.gstatic.com/firebasejs/4.11.0/firebase.js"></script>
+<script src="https://www.gstatic.com/firebasejs/4.11.0/firebase-firestore.js"></script>
+<script>
+const config = {
+  apiKey: "AIzaSyAGlqQCBoLbpcXNOl0EwkLPxIkGRZ9dd9U",
+  authDomain: "firestore-sample-eface.firebaseapp.com",
+  databaseURL: "https://firestore-sample-eface.firebaseio.com",
+  projectId: "firestore-sample-eface",
+  storageBucket: "firestore-sample-eface.appspot.com",
+  messagingSenderId: "394228960871"
+}
+firebase.initializeApp(config)
+
+function initApp() {
+  const $output = document.querySelector('#output')
+  const $messageFld = document.querySelector('#messageFld')
+  const $saveBtn = document.querySelector('#saveBtn')
+  const $loadBtn = document.querySelector('#loadBtn')
+  const $updateBtn = document.querySelector('#updateBtn')
+  const $deleteBtn = document.querySelector('#deleteBtn')
+  const db = firebase.firestore()
+  const docRef = db.doc('sample/message')
+
+  $saveBtn.addEventListener('click', () => {
+    docRef.set({ value: $messageFld.value })
+    .then(() => { console.log('success') })
+    .catch(e => { console.error(e) })
+  })
+
+  $loadBtn.addEventListener('click', () => {
+    docRef.get()
+    .then(doc => {
+      if (doc && doc.exists) {
+        $output.innerHTML = doc.data().value
+      }
+    })
+    .catch(e => { console.log(e) })
+  })
+}
+
+document.addEventListener('DOMContentLoaded', initApp)
+</script>
+</body>
+</html>
