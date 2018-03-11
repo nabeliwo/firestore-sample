@@ -9,17 +9,23 @@
 </head>
 <body>
 
-<h1>Message is: <span id="output"></span>
-  <button id="loadBtn">表示</button>
-</h1>
-<input id="messageFld" type="text">
-<button id="saveBtn">保存</button>
-<button id="updateBtn">更新</button>
-<button id="deleteBtn">削除</button>
+<div id="auth" style="display: none;">
+  <input id="email" type="email">
+  <input id="pswd" type="password">
+  <button id="loginBtn" type="button">ログイン</button>
+</div>
+
+<div id="output" style="display: none;">
+  <button id="logoutBtn" type="button">ログアウト</button>
+  <p>ユーザーID : <span id="uid"></span></p>
+  <input id="message" type="text" placeholder="メッセージを入力">
+  <button id="saveBtn" type="button">保存</button>
+</div>
 
 <script src="https://www.gstatic.com/firebasejs/4.11.0/firebase.js"></script>
 <script src="https://www.gstatic.com/firebasejs/4.11.0/firebase-firestore.js"></script>
 <script>
+// project 削除済み
 const config = {
   apiKey: "AIzaSyAGlqQCBoLbpcXNOl0EwkLPxIkGRZ9dd9U",
   authDomain: "firestore-sample-eface.firebaseapp.com",
@@ -31,57 +37,63 @@ const config = {
 firebase.initializeApp(config)
 
 function initApp() {
+  const $auth = document.querySelector('#auth')
+  const $email = document.querySelector('#email')
+  const $pswd = document.querySelector('#pswd')
+  const $loginBtn = document.querySelector('#loginBtn')
   const $output = document.querySelector('#output')
-  const $messageFld = document.querySelector('#messageFld')
+  const $logoutBtn = document.querySelector('#logoutBtn')
+  const $uid = document.querySelector('#uid')
+  const $message = document.querySelector('#message')
   const $saveBtn = document.querySelector('#saveBtn')
-  const $loadBtn = document.querySelector('#loadBtn')
-  const $updateBtn = document.querySelector('#updateBtn')
-  const $deleteBtn = document.querySelector('#deleteBtn')
-  const db = firebase.firestore()
-  const docRef = db.doc('sample/message')
+  let docRef = null
 
-  $saveBtn.addEventListener('click', () => {
-    docRef.set({ value: $messageFld.value })
+  firebase.auth().onAuthStateChanged(user => {
+    if (user) {
+      /*---------------------------------------*/
+      /* 5.1 ログインしている場合 */
+      /*---------------------------------------*/
+      console.log(user)
+      $uid.innerHTML = user.uid
+      $auth.style.display = 'none'
+      $output.style.display = 'block'
+
+      const db = firebase.firestore()
+      docRef = db.collection('messages').doc(user.uid)
+
+      $saveBtn.addEventListener('click', postMessage)
+    } else {
+      /*---------------------------------------*/
+      /* 5.2 ログインしていない場合 */
+      /*---------------------------------------*/
+      console.log('logged out')
+      $auth.style.display = 'block'
+      $output.style.display = 'none'
+      $saveBtn.removeEventListener('click', postMessage)
+    }
+  })
+
+  function postMessage() {
+    console.log('postMessage')
+
+if (docRef === null) return
+
+    docRef.set({ value: $message.value })
     .then(() => { console.log('success') })
     .catch(e => { console.error(e) })
-  })
-
-  $loadBtn.addEventListener('click', () => {
-    docRef.get()
-    .then(doc => {
-      if (doc && doc.exists) {
-        $output.innerHTML = doc.data().value
-      }
-    })
-    .catch(e => { console.log(e) })
-  })
-
-  $updateBtn.addEventListener('click', () => {
-    docRef.update({ value: $messageFld.value })
-    .then(() => { console.log('updated') })
-    .catch(e => { console.error(e) })
-  })
-
-  $deleteBtn.addEventListener('click', () => {
-    //- 基本的にフィールドの値を消す場合は、FieldValue.delete()を使用してupdate()する。
-    docRef.update({ value: firebase.firestore.FieldValue.delete() })
-    .then(() => { console.log('deleted field') })
-    .catch(e => { console.error(e) })
-
-    //- ドキュメント自体をまるごと削除したい場合はdelete()を使う
-    // docRef.delete()
-    // .then(() => { console.log('deleted') })
-    // .catch(e => { console.error(e) })
-  })
-
-  function getRealtimeUpDates() {
-    docRef.onSnapshot({}, doc => {
-      if (doc && doc.exists) {
-        $output.innerHTML = doc.data().value
-      }
-    })
   }
-  getRealtimeUpDates()
+
+  $loginBtn.addEventListener('click', () => {
+    const email = $email.value
+    const pswd = $pswd.value
+
+    firebase.auth().signInWithEmailAndPassword(email, pswd)
+    .catch(e => { console.error(e) })
+  });
+
+  $logoutBtn.addEventListener('click', e => {
+    firebase.auth().signOut()
+  })
 }
 
 document.addEventListener('DOMContentLoaded', initApp)
