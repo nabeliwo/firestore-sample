@@ -55,6 +55,33 @@ function initApp() {
     })
     .catch(e => { console.log(e) })
   })
+
+  $updateBtn.addEventListener('click', () => {
+    docRef.update({ value: $messageFld.value })
+    .then(() => { console.log('updated') })
+    .catch(e => { console.error(e) })
+  })
+
+  $deleteBtn.addEventListener('click', () => {
+    //- 基本的にフィールドの値を消す場合は、FieldValue.delete()を使用してupdate()する。
+    docRef.update({ value: firebase.firestore.FieldValue.delete() })
+    .then(() => { console.log('deleted field') })
+    .catch(e => { console.error(e) })
+
+    //- ドキュメント自体をまるごと削除したい場合はdelete()を使う
+    // docRef.delete()
+    // .then(() => { console.log('deleted') })
+    // .catch(e => { console.error(e) })
+  })
+
+  function getRealtimeUpDates() {
+    docRef.onSnapshot({}, doc => {
+      if (doc && doc.exists) {
+        $output.innerHTML = doc.data().value
+      }
+    })
+  }
+  getRealtimeUpDates()
 }
 
 document.addEventListener('DOMContentLoaded', initApp)
